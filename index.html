@@ -343,7 +343,7 @@
 
         // FUNCTION: TUMA KIKUMBUSHO KWA SMS YA KAWAIDA
         function sendSmsReminder(phone, name) {
-            const message = `Habari ${name}, Tunapenda kukukumbusha kuhusu mahudhurio yako katika shughuli yetu. Tafadhali usisahau kadi yako ya mwaliko! - Mary Events`;
+            const message = `Habari Ndugu ${name}, Tunapenda kukukumbusha kuhusu kuhudhuria katika harusi ya Bw. SOLOMON FUNGO itakayofanyika tarehe 26/09/2026. Tafadhali usisahau kadi yako ya mwaliko! - Mary Events`;
             const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
             const separator = isIOS ? '&' : '?';
             const smsUrl = `sms:${phone}${separator}body=${encodeURIComponent(message)}`;
@@ -352,14 +352,14 @@
 
         // FUNCTION: TUMA KIKUMBUSHO KWA WHATSAPP
         function sendWhatsappReminder(phone, name) {
-            const message = `Habari ${name}, Tunapenda kukukumbusha kuhusu mahudhurio yako katika shughuli yetu. Tafadhali usisahau kadi yako ya mwaliko! - Mary Events`;
+            const message = `Habari Ndugu ${name}, Tunapenda kukukumbusha kuhusu mahudhurio yako katika shughuli yetu. Tafadhali usisahau kadi yako ya mwaliko! Ukipata changamoto yoyote kuhusu kadi usisite kuwasiliana nasi. Ahsante - Mary Events`;
             const whatsappUrl = `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(message)}`;
             window.open(whatsappUrl, '_blank');
         }
 
         // FUNCTION: TUMA KADI (Ujumbe wa Mwaliko)
         function sendCard(phone, name, cardStatus) {
-            const message = `Habari ${name},\n\nHii hapa ni kadi yako rasmi ya mwaliko wa harusi (${cardStatus || 'Mwaliko'}).\n\nUnapowasili ukumbini tafadhali onesha QR Code iliyopo kwenye kadi hii. Karibu sana!\n\n- Mary Events`;
+            const message = `Habari ${name},\n\nPokea kadi ya mwaliko wa harusi ya SOLOMON FUNGO & RACHEL MANJIRA. (${cardStatus || 'Mwaliko'}).\n\nTafadhali fika na kadi hii ukumbini na onesha QR Code iliyopo kwenye kadi hii. Karibu sana! \n\nRamani ya Ukumbini: https://maps.app.goo.gl/HneDx5e5ZhPW2WGG9 \n\nTAFADHALI TUJULISHE UKIPOKEA KADI HII \n\n- Mary Events`;
             const whatsappUrl = `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(message)}`;
             window.open(whatsappUrl, '_blank');
         }
