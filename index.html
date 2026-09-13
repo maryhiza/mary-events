@@ -41,12 +41,12 @@
     <!-- 1. SPLASH SCREEN WITH BRAND COLORS -->
     <div id="splash-screen" class="fixed inset-0 bg-gradient-to-br from-navy to-navy-dark z-50 flex flex-col items-center justify-center text-white transition-opacity duration-500 p-4">
         <div class="animate-pulse mb-6 text-center">
-<div class="w-36 h-36 mx-auto bg-white rounded-full p-3 shadow-2xl flex items-center justify-center border-4 border-rosebrand">
-    <div class="text-center">
-        <span class="text-4xl font-black text-navy tracking-tighter">M<span class="text-rosebrand">E</span></span>
-        <p class="text-[9px] font-bold text-navy tracking-widest uppercase mt-[-4px]">Mary Events</p>
-    </div>
-</div>
+            <!-- Container la Logo (Weka link ya picha ya logo hapa kama una serekali/host) -->
+            <div class="w-36 h-36 mx-auto bg-white rounded-full p-3 shadow-2xl flex items-center justify-center border-4 border-rosebrand">
+                <div class="text-center">
+                    <span class="text-4xl font-black text-navy tracking-tighter">M<span class="text-rosebrand">E</span></span>
+                    <p class="text-[9px] font-bold text-navy tracking-widest uppercase mt-[-4px]">Mary Events</p>
+                </div>
             </div>
         </div>
         <h1 class="text-3xl font-extrabold tracking-wider uppercase text-white">Mary Events</h1>
@@ -194,39 +194,18 @@
         }
 
         function startScanner() {
-    document.getElementById('result-box').classList.add('hidden');
-    document.getElementById('btn-restart-scan').classList.add('hidden');
+            document.getElementById('result-box').classList.add('hidden');
+            document.getElementById('btn-restart-scan').classList.add('hidden');
 
-    if (!html5QrcodeScanner) {
-        html5QrcodeScanner = new Html5Qrcode("reader");
-    }
+            if (!html5QrcodeScanner) {
+                html5QrcodeScanner = new Html5Qrcode("reader");
+            }
 
-    const config = { 
-        fps: 10, 
-        qrbox: { width: 220, height: 220 },
-        aspectRatio: 1.0
-    };
+            const config = { fps: 10, qrbox: { width: 220, height: 220 } };
 
-    // Angalia kama browser inaruhusu kamera na ipo kwenye HTTPS
-    Html5Qrcode.getCameras().then(devices => {
-        if (devices && devices.length) {
-            // Chagua kamera ya nyuma (facingMode: environment au camera ya mwisho kwenye list)
-            let cameraId = devices[devices.length - 1].id; 
-            
-            html5QrcodeScanner.start(
-                cameraId, 
-                config, 
-                onScanSuccess
-            ).catch(err => {
-                alert("Kosa la Kamera: " + err + "\n\nHakikisha unatumia HTTPS na umeruhusu Camera Permission.");
-            });
-        } else {
-            alert("Hakuna Kamera iliyopatikana kwenye kifaa hiki!");
+            html5QrcodeScanner.start({ facingMode: "environment" }, config, onScanSuccess)
+            .catch(err => console.error("Camera Error:", err));
         }
-    }).catch(err => {
-        alert("Browser imezuia Kamera! Sababu: " + err + "\n\nKUMBUKA: Mfumo huu unahitaji Link ya HTTPS kufanya kazi.");
-    });
-}
 
         function stopScanner() {
             if (html5QrcodeScanner && html5QrcodeScanner.isScanning) {
