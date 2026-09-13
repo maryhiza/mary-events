@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mary Events - Wedding QR Scanner</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // Custom Branding Colors kutoka kwenye Logo
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        navy: {
+                            DEFAULT: '#0F1C3F',
+                            light: '#1B2C5B',
+                            dark: '#0A132C'
+                        },
+                        rosebrand: {
+                            DEFAULT: '#C83B66',
+                            light: '#E25B83',
+                            bg: '#F9EBF2'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- HTML5 QR Code Library -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    
+    <!-- Firebase SDK (Compat Version for Web) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+</head>
+<body class="bg-slate-50 min-h-screen text-slate-800 flex flex-col font-sans">
+
+    <!-- 1. SPLASH SCREEN WITH BRAND COLORS -->
+    <div id="splash-screen" class="fixed inset-0 bg-gradient-to-br from-navy to-navy-dark z-50 flex flex-col items-center justify-center text-white transition-opacity duration-500 p-4">
+        <div class="animate-pulse mb-6 text-center">
+            <!-- Container la Logo (Weka link ya picha ya logo hapa kama una serekali/host) -->
+            <!-- WEKA HII BADALA YAKE: -->
+            <div class="w-36 h-36 mx-auto bg-white rounded-full p-2 shadow-2xl flex items-center justify-center border-4 border-rosebrand overflow-hidden">
+            <img src="maryevents.png" alt="Mary Events Logo" class="w-full h-full object-contain">
+            </div>
+        </div>
+        <h1 class="text-3xl font-extrabold tracking-wider uppercase text-white">Mary Events</h1>
+        <p class="text-rosebrand-light mt-1 text-sm italic font-medium">"We plan. You celebrate."</p>
+        <span class="text-xs bg-navy-light text-slate-200 px-3 py-1 rounded-full mt-3 border border-rosebrand/30">Mfumo wa Uhakiki wa Kadi</span>
+        
+        <button onclick="closeSplash()" class="mt-8 px-8 py-3 bg-rosebrand text-white font-bold rounded-full shadow-lg hover:bg-rosebrand-light transition active:scale-95">
+            Ingia Kwenye Mfumo
+        </button>
+    </div>
+
+    <!-- MAIN APP CONTAINER -->
+    <div class="flex-1 flex flex-col max-w-md mx-auto w-full bg-white shadow-xl min-h-screen pb-20 border-x border-slate-100">
+        
+        <!-- HEADER -->
+        <header class="bg-navy text-white p-4 shadow-md flex items-center justify-between sticky top-0 z-10 border-b-2 border-rosebrand">
+            <div class="flex items-center gap-2">
+                <i class="fa-solid fa-qrcode text-xl text-rosebrand-light"></i>
+                <div>
+                    <h2 class="font-bold text-base leading-tight" id="screen-title">Scanner ya Kadi</h2>
+                    <p class="text-[10px] text-rosebrand-light font-medium italic">Mary Events</p>
+                </div>
+            </div>
+            <span class="text-[10px] bg-rosebrand/20 text-rosebrand-light border border-rosebrand/40 px-2.5 py-0.5 rounded-full font-semibold">Live Firebase</span>
+        </header>
+
+        <!-- 2. SCAN SCREEN -->
+        <section id="scan-screen" class="p-4 flex-1 flex flex-col items-center">
+            <div class="w-full bg-navy-dark rounded-2xl overflow-hidden shadow-inner relative min-h-[280px] flex items-center justify-center border-2 border-navy-light">
+                <div id="reader" class="w-full"></div>
+            </div>
+            
+            <button id="btn-restart-scan" onclick="startScanner()" class="hidden mt-4 px-5 py-2.5 bg-navy text-white text-sm font-semibold rounded-xl shadow hover:bg-navy-light transition border border-rosebrand/30">
+                <i class="fa-solid fa-rotate-right mr-2 text-rosebrand"></i>Scan Kadi Nyingine
+            </button>
+
+            <!-- SCAN RESULTS AREA -->
+            <div id="result-box" class="w-full mt-4 p-4 rounded-xl shadow-md hidden border-l-8 transition-all">
+                <div id="result-status" class="text-xl font-extrabold flex items-center gap-2 mb-2"></div>
+                <div id="result-details" class="text-sm space-y-1 mt-2">
+                    <p><strong>MWENYE KADI:</strong> <span id="res-name" class="font-semibold text-navy">-</span></p>
+                    <p><strong>NAMBA YA SIMU:</strong> <span id="res-phone">-</span></p>
+                    <p><strong>CARD STATUS:</strong> <span id="res-card-type" class="uppercase font-bold text-rosebrand">-</span></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. GUEST LIST SCREEN -->
+        <section id="guest-screen" class="p-4 flex-1 hidden">
+            <!-- COUNTERS DASHBOARD -->
+            <div class="grid grid-cols-3 gap-2 mb-4">
+                <div class="bg-navy/5 border border-navy/20 p-3 rounded-xl text-center">
+                    <span class="block text-2xl font-black text-navy" id="stat-total">0</span>
+                    <span class="text-[10px] uppercase font-bold text-navy">Jumla</span>
+                </div>
+                <div class="bg-emerald-50 border border-emerald-200 p-3 rounded-xl text-center">
+                    <span class="block text-2xl font-black text-emerald-600" id="stat-scanned">0</span>
+                    <span class="text-[10px] uppercase font-bold text-emerald-800">Scanned</span>
+                </div>
+                <div class="bg-rosebrand-bg border border-rosebrand/30 p-3 rounded-xl text-center">
+                    <span class="block text-2xl font-black text-rosebrand" id="stat-pending">0</span>
+                    <span class="text-[10px] uppercase font-bold text-rosebrand">Bado</span>
+                </div>
+            </div>
+
+            <h3 class="font-bold text-navy mb-3 flex items-center justify-between">
+                <span>Orodha ya Waalikwa</span>
+                <i class="fa-solid fa-users text-rosebrand"></i>
+            </h3>
+
+            <!-- GUEST CARDS LIST -->
+            <div id="guests-container" class="space-y-3">
+                <p class="text-center text-slate-400 text-sm py-8">Inapakia data kutoka Firebase...</p>
+            </div>
+        </section>
+
+        <!-- BOTTOM NAVIGATION TABS -->
+        <nav class="fixed bottom-0 max-w-md w-full bg-white border-t border-slate-200 flex justify-around p-2 z-10 shadow-lg">
+            <button onclick="switchTab('scan')" id="tab-scan" class="flex flex-col items-center text-rosebrand font-bold text-xs py-1">
+                <i class="fa-solid fa-qrcode text-xl mb-1"></i>
+                <span>Scan Kadi</span>
+            </button>
+            <button onclick="switchTab('guest')" id="tab-guest" class="flex flex-col items-center text-slate-400 font-bold text-xs py-1">
+                <i class="fa-solid fa-address-book text-xl mb-1"></i>
+                <span>Wageni</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- JAVASCRIPT & FIREBASE LOGIC -->
+    <script>
+        // FIREBASE CONFIGURATION
+        const firebaseConfig = {
+            databaseURL: "https://mary-events-default-rtdb.firebaseio.com"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        let guestsData = {};
+        let html5QrcodeScanner = null;
+
+        // Live Firebase Listener
+        db.ref('guests').on('value', (snapshot) => {
+            guestsData = snapshot.val() || {};
+            renderGuestList();
+        });
+
+        setTimeout(() => closeSplash(), 3000);
+
+        function closeSplash() {
+            const splash = document.getElementById('splash-screen');
+            splash.classList.add('opacity-0', 'pointer-events-none');
+            setTimeout(() => splash.style.display = 'none', 500);
+            startScanner();
+        }
+
+        function switchTab(tab) {
+            const scanScreen = document.getElementById('scan-screen');
+            const guestScreen = document.getElementById('guest-screen');
+            const tabScan = document.getElementById('tab-scan');
+            const tabGuest = document.getElementById('tab-guest');
+            const screenTitle = document.getElementById('screen-title');
+
+            if (tab === 'scan') {
+                scanScreen.classList.remove('hidden');
+                guestScreen.classList.add('hidden');
+                tabScan.classList.add('text-rosebrand');
+                tabScan.classList.remove('text-slate-400');
+                tabGuest.classList.add('text-slate-400');
+                tabGuest.classList.remove('text-rosebrand');
+                screenTitle.innerText = "Scanner ya Kadi";
+                startScanner();
+            } else {
+                scanScreen.classList.add('hidden');
+                guestScreen.classList.remove('hidden');
+                tabGuest.classList.add('text-rosebrand');
+                tabGuest.classList.remove('text-slate-400');
+                tabScan.classList.add('text-slate-400');
+                tabScan.classList.remove('text-rosebrand');
+                screenTitle.innerText = "Orodha ya Wageni";
+                stopScanner();
+                renderGuestList();
+            }
+        }
+
+        function startScanner() {
+    document.getElementById('result-box').classList.add('hidden');
+    document.getElementById('btn-restart-scan').classList.add('hidden');
+
+    if (!html5QrcodeScanner) {
+        html5QrcodeScanner = new Html5Qrcode("reader");
+    }
+
+    const config = { 
+        fps: 10, 
+        qrbox: { width: 220, height: 220 },
+        aspectRatio: 1.0
+    };
+
+    // Angalia kama browser inaruhusu kamera na ipo kwenye HTTPS
+    Html5Qrcode.getCameras().then(devices => {
+        if (devices && devices.length) {
+            // Chagua kamera ya nyuma (facingMode: environment au camera ya mwisho kwenye list)
+            let cameraId = devices[devices.length - 1].id; 
+            
+            html5QrcodeScanner.start(
+                cameraId, 
+                config, 
+                onScanSuccess
+            ).catch(err => {
+                alert("Kosa la Kamera: " + err + "\n\nHakikisha unatumia HTTPS na umeruhusu Camera Permission.");
+            });
+        } else {
+            alert("Hakuna Kamera iliyopatikana kwenye kifaa hiki!");
+        }
+    }).catch(err => {
+        alert("Browser imezuia Kamera! Sababu: " + err + "\n\nKUMBUKA: Mfumo huu unahitaji Link ya HTTPS kufanya kazi.");
+    });
+}
+
+        function stopScanner() {
+            if (html5QrcodeScanner && html5QrcodeScanner.isScanning) {
+                html5QrcodeScanner.stop();
+            }
+        }
+
+        function onScanSuccess(cardId) {
+            stopScanner();
+            document.getElementById('btn-restart-scan').classList.remove('hidden');
+            
+            const resultBox = document.getElementById('result-box');
+            const statusHeading = document.getElementById('result-status');
+            const resName = document.getElementById('res-name');
+            const resPhone = document.getElementById('res-phone');
+            const resCardType = document.getElementById('res-card-type');
+
+            resultBox.classList.remove('hidden', 'bg-emerald-50', 'bg-amber-50', 'bg-rose-50', 'border-emerald-500', 'border-amber-500', 'border-rosebrand');
+
+            const guest = guestsData[cardId];
+
+            if (!guest) {
+                // KADI HAIPO (RED)
+                resultBox.classList.add('bg-rose-50', 'border-rosebrand');
+                statusHeading.className = "text-xl font-extrabold flex items-center gap-2 text-rosebrand";
+                statusHeading.innerHTML = `<i class="fa-solid fa-circle-xmark"></i> KADI HII HAIPO`;
+                resName.innerText = "N/A";
+                resPhone.innerText = "N/A";
+                resCardType.innerText = "N/A";
+            } 
+            else if (guest.is_checked_in === true || guest.is_checked_in === "true") {
+                // KADI IMETUMIKA (AMBER)
+                resultBox.classList.add('bg-amber-50', 'border-amber-500');
+                statusHeading.className = "text-xl font-extrabold flex items-center gap-2 text-amber-600";
+                statusHeading.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> KADI IMETUMIKA`;
+                resName.innerText = guest.full_name || "N/A";
+                resPhone.innerText = guest.phone_number || "N/A";
+                resCardType.innerText = guest.card_status || "N/A";
+            } 
+            else {
+                // KADI NI HALALI (GREEN)
+                resultBox.classList.add('bg-emerald-50', 'border-emerald-500');
+                statusHeading.className = "text-xl font-extrabold flex items-center gap-2 text-emerald-600";
+                statusHeading.innerHTML = `<i class="fa-solid fa-circle-check"></i> KADI NI HALALI`;
+                resName.innerText = guest.full_name || "N/A";
+                resPhone.innerText = guest.phone_number || "N/A";
+                resCardType.innerText = guest.card_status || "N/A";
+
+                db.ref(`guests/${cardId}`).update({
+                    is_checked_in: true,
+                    scanned_at: new Date().toLocaleString()
+                });
+            }
+        }
+
+        function renderGuestList() {
+            const container = document.getElementById('guests-container');
+            const guestKeys = Object.keys(guestsData);
+
+            if (guestKeys.length === 0) {
+                container.innerHTML = '<p class="text-center text-slate-400 text-sm py-8">Hakuna data za wageni kwenye Firebase.</p>';
+                document.getElementById('stat-total').innerText = '0';
+                document.getElementById('stat-scanned').innerText = '0';
+                document.getElementById('stat-pending').innerText = '0';
+                return;
+            }
+
+            container.innerHTML = '';
+            let scannedCount = 0;
+            let pendingCount = 0;
+
+            guestKeys.forEach((key) => {
+                const guest = guestsData[key];
+                const isScanned = guest.is_checked_in === true || guest.is_checked_in === "true";
+
+                if (isScanned) scannedCount++;
+                else pendingCount++;
+
+                const statusBadge = isScanned 
+                    ? `<span class="bg-emerald-100 text-emerald-800 text-xs px-2 py-0.5 rounded font-bold">Imescaniwa</span>`
+                    : `<span class="bg-rosebrand-bg text-rosebrand text-xs px-2 py-0.5 rounded font-bold">Bado</span>`;
+
+                const cardHtml = `
+                    <div class="p-3 bg-white border border-slate-200 rounded-xl shadow-sm space-y-2 hover:border-rosebrand/40 transition">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h4 class="font-bold text-navy">${guest.full_name || 'Bila Jina'}</h4>
+                                <p class="text-xs text-slate-500">
+                                    <i class="fa-solid fa-phone text-[10px] mr-1 text-navy-light"></i>${guest.phone_number || 'N/A'}
+                                    <span class="ml-2 font-semibold text-rosebrand">(${guest.card_status || 'N/A'})</span>
+                                </p>
+                            </div>
+                            ${statusBadge}
+                        </div>
+                        
+                        <div class="flex gap-1.5 pt-2 border-t border-slate-100">
+                            <!-- BUTTON: VIEW/DOWNLOAD CARD IMAGE -->
+                            <button onclick="viewCard('${guest.card_url}')" title="Fungua picha" class="bg-slate-100 hover:bg-slate-200 text-navy text-xs p-2 rounded-lg font-semibold flex items-center justify-center transition">
+                                <i class="fa-solid fa-image text-navy"></i>
+                            </button>
+
+                            <!-- BUTTON: SMS REMINDER -->
+                            <button onclick="sendSmsReminder('${guest.phone_number}', '${guest.full_name}')" title="Tuma SMS ya Kawaida" class="flex-1 bg-navy/10 hover:bg-navy/20 text-navy text-xs py-1.5 px-2 rounded-lg font-semibold flex items-center justify-center gap-1 transition">
+                                <i class="fa-solid fa-comment-sms text-navy"></i> SMS
+                            </button>
+
+                            <!-- BUTTON: WHATSAPP REMINDER -->
+                            <button onclick="sendWhatsappReminder('${guest.phone_number}', '${guest.full_name}')" title="Tuma WhatsApp" class="flex-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs py-1.5 px-2 rounded-lg font-semibold flex items-center justify-center gap-1 transition">
+                                <i class="fa-brands fa-whatsapp text-emerald-600"></i> WA
+                            </button>
+                            
+                            <!-- BUTTON: SEND CARD -->
+                            <button onclick="sendCard('${guest.phone_number}', '${guest.full_name}', '${guest.card_status}')" class="flex-1 bg-rosebrand hover:bg-rosebrand-light text-white text-xs py-1.5 px-2 rounded-lg font-semibold flex items-center justify-center gap-1 transition shadow-sm">
+                                <i class="fa-solid fa-paper-plane text-xs"></i> Kadi
+                            </button>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += cardHtml;
+            });
+
+            document.getElementById('stat-total').innerText = guestKeys.length;
+            document.getElementById('stat-scanned').innerText = scannedCount;
+            document.getElementById('stat-pending').innerText = pendingCount;
+        }
+
+        // FUNCTION: FUNGUA PICHA
+        function viewCard(cardUrl) {
+            if (!cardUrl || cardUrl.trim() === "") {
+                alert("Mwalikwa huyu hana Link ya picha (card_url) kwenye Firebase!");
+                return;
+            }
+            window.open(cardUrl, '_blank');
+        }
+
+        // FUNCTION: TUMA KIKUMBUSHO KWA SMS YA KAWAIDA
+        function sendSmsReminder(phone, name) {
+            const message = `Habari ${name}, Tunapenda kukukumbusha kuhusu mahudhurio yako katika shughuli yetu. Tafadhali usisahau kadi yako ya mwaliko! - Mary Events`;
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+            const separator = isIOS ? '&' : '?';
+            const smsUrl = `sms:${phone}${separator}body=${encodeURIComponent(message)}`;
+            window.location.href = smsUrl;
+        }
+
+        // FUNCTION: TUMA KIKUMBUSHO KWA WHATSAPP
+        function sendWhatsappReminder(phone, name) {
+            const message = `Habari ${name}, Tunapenda kukukumbusha kuhusu mahudhurio yako katika shughuli yetu. Tafadhali usisahau kadi yako ya mwaliko! - Mary Events`;
+            const whatsappUrl = `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(message)}`;
+            window.open(whatsappUrl, '_blank');
+        }
+
+        // FUNCTION: TUMA KADI (Ujumbe wa Mwaliko)
+        function sendCard(phone, name, cardStatus) {
+            const message = `Habari ${name},\n\nHii hapa ni kadi yako rasmi ya mwaliko wa harusi (${cardStatus || 'Mwaliko'}).\n\nUnapowasili ukumbini tafadhali onesha QR Code iliyopo kwenye kadi hii. Karibu sana!\n\n- Mary Events`;
+            const whatsappUrl = `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(message)}`;
+            window.open(whatsappUrl, '_blank');
+        }
+    </script>
+</body>
+</html>
