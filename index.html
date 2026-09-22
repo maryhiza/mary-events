@@ -359,7 +359,7 @@
 
         // FUNCTION: TUMA KADI (Ujumbe wa Mwaliko)
         function sendCard(phone, name, cardStatus) {
-            const message = `Habari ${name},\n\nPokea kadi ya mwaliko wa harusi ya SOLOMON FUNGO & RACHEL MANJIRA. (${cardStatus || 'Mwaliko'}).\n\nTafadhali fika na kadi hii ukumbini na onesha QR Code iliyopo kwenye kadi hii. Karibu sana! \n\nRamani ya Ukumbini: https://maps.app.goo.gl/HneDx5e5ZhPW2WGG9 \n\nTAFADHALI TUJULISHE UKIPOKEA KADI HII \n\n- Mary Events`;
+            const message = `Habari ${name},\n\nPokea kadi ya mwaliko wa harusi ya SOLOMON FUNGO & RACHEL MANJIRA. (${cardStatus || 'Mwaliko'}).\n\nUnaombwa kufika na kadi hii ukumbini na onesha QR Code iliyopo kwenye kadi. Karibu sana! \n\nRamani ya Ukumbini: https://maps.app.goo.gl/HneDx5e5ZhPW2WGG9 \n\nTAFADHALI TUJULISHE UKIPOKEA KADI \n\n- Mary Events`;
             const whatsappUrl = `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(message)}`;
             window.open(whatsappUrl, '_blank');
         }
