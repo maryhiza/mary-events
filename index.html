@@ -343,7 +343,7 @@
 
         // FUNCTION: TUMA KIKUMBUSHO KWA SMS YA KAWAIDA
         function sendSmsReminder(phone, name) {
-            const message = `Habari Ndugu ${name}, Tunapenda kukukumbusha kuhusu kuhudhuria katika harusi ya Bw. SOLOMON FUNGO itakayofanyika tarehe 26/09/2026. Tafadhali usisahau kadi yako ya mwaliko! - Mary Events`;
+            const message = ` Ndugu ${name}, Tunapenda kukukumbusha kuhusu kuhudhuria katika harusi ya Bw. SOLOMON FUNGO itakayofanyika leo tarehe 26/09/2026. Tafadhali usisahau kadi yako ya mwaliko! Ukipata Changamoto yoyote kuhusu kadi usisite kuwasiliana nasi. Asante - Mary Events`;
             const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
             const separator = isIOS ? '&' : '?';
             const smsUrl = `sms:${phone}${separator}body=${encodeURIComponent(message)}`;
